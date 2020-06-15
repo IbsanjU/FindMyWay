@@ -31,15 +31,56 @@ class ViewController: UIViewController {
     var currentLoc: CLLocationCoordinate2D!
     var destinationLoc: CLLocationCoordinate2D!
     
+    @IBOutlet weak var BtnTrans: UIButton!
+    @IBOutlet weak var FAB: UIButton!
+    @IBOutlet weak var BtnWalk: UIButton!
     
     @IBOutlet weak var mapView: MKMapView!
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        buttonStyle()
         gesture()
         configureLocationServices()
         
         // Do any additional setup after loading the view, typically from a nib.
+    }
+    func buttonStyle(){
+        FAB.layer.cornerRadius = 24
+        FAB.layer.masksToBounds = true
+        FAB.backgroundColor = UIColor.white
+        FAB.layer.zPosition = 1
+        
+        BtnWalk.layer.cornerRadius = 24
+        BtnWalk.layer.masksToBounds = true
+        BtnWalk.backgroundColor = UIColor.white
+        BtnWalk.layer.zPosition = 1
+        
+        BtnTrans.layer.cornerRadius = 24
+        BtnTrans.layer.masksToBounds = true
+        BtnTrans.backgroundColor = UIColor.white
+        BtnTrans.layer.zPosition = 1
+        
+        hideBtn()
+    }
+    func hideBtn(){
+        BtnWalk.isHidden = true
+        BtnTrans.isHidden = true
+    }
+    func showBtn(){
+        BtnWalk.isHidden = false
+        BtnTrans.isHidden = false
+    }
+    
+    @IBAction func ButtonGetLocation(_ sender: Any) {
+        //configureLocationServices()
+        getDirections(transType: .automobile)
+        //userLocationUpdate() .transit
+    }
+    @IBAction func ButtonWalking(_ sender: Any) {
+        getDirections(transType: .walking)
+    }
+    @IBAction func ButtonTransit(_ sender: Any) {
+        getDirections(transType: .transit)
     }
     
 //    private func doubleTapGesture(){
@@ -73,6 +114,7 @@ class ViewController: UIViewController {
     func addAnnotation(location: CLLocationCoordinate2D){
         removeAnnotation()
         clearPoly()
+        hideBtn()
         destinationLoc = location
         let annotation = MKPointAnnotation()
         annotation.coordinate = location
@@ -93,11 +135,7 @@ class ViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
 //    --------------------
-    @IBAction func ButtonGetLocation(_ sender: Any) {
-        //configureLocationServices()
-        getDirections()
-        //userLocationUpdate()
-    }
+    
     
     func userLocationUpdate(){
         if(CLLocationManager.authorizationStatus() == .authorizedWhenInUse ||
@@ -108,7 +146,6 @@ class ViewController: UIViewController {
     }
     func clearPoly(){
         for poll in mapView.overlays {
-            
             mapView.remove(poll)
         }
     }
@@ -116,7 +153,7 @@ class ViewController: UIViewController {
 
     
     
-    func getDirections(){
+    func getDirections(transType: MKDirectionsTransportType){
         if currentLoc == nil || destinationLoc == nil {
             clearPoly()
             userLocationUpdate()
@@ -127,6 +164,7 @@ class ViewController: UIViewController {
         else{
             userLocationUpdate()
             removeAnnotation()
+            showBtn()
             clearPoly()
             let sourcePin = customPin(pinTitle: "Your location", pinSubTitle: "", location: currentLoc)
             let destinationPin = customPin(pinTitle: "Destination Point", pinSubTitle: "", location: destinationLoc)
@@ -139,7 +177,7 @@ class ViewController: UIViewController {
         let directionRequest                = MKDirectionsRequest()
         directionRequest.source             = MKMapItem(placemark: sourcePlaceMark)
         directionRequest.destination        = MKMapItem(placemark: destinationPlaceMark)
-        directionRequest.transportType      = .automobile
+        directionRequest.transportType      = transType
         directionRequest.requestsAlternateRoutes = true
         
         let directions = MKDirections(request: directionRequest)
@@ -155,8 +193,7 @@ class ViewController: UIViewController {
                 self.mapView.add(route.polyline, level: .aboveRoads)
                 let rect = route.polyline.boundingMapRect
                 self.mapView.setRegion(MKCoordinateRegionForMapRect(rect), animated: true)
-            }
-            
+            }            
         }
         
         self.mapView.delegate = self
