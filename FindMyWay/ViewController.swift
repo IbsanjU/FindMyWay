@@ -34,11 +34,13 @@ class ViewController: UIViewController {
     @IBOutlet weak var BtnTrans: UIButton!
     @IBOutlet weak var FAB: UIButton!
     @IBOutlet weak var BtnWalk: UIButton!
+    @IBOutlet weak var stepperZoom: UIStackView!
     
     @IBOutlet weak var mapView: MKMapView!
     override func viewDidLoad() {
         super.viewDidLoad()
         buttonStyle()
+        disableDoubleTap()
         gesture()
         configureLocationServices()
         
@@ -60,6 +62,7 @@ class ViewController: UIViewController {
         BtnTrans.backgroundColor = UIColor.white
         BtnTrans.layer.zPosition = 1
         
+        stepperZoom.transform = stepperZoom.transform.rotated(by: 90)
         hideBtn()
     }
     func hideBtn(){
@@ -80,15 +83,45 @@ class ViewController: UIViewController {
         getDirections(transType: .walking)
     }
     @IBAction func ButtonTransit(_ sender: Any) {
-        getDirections(transType: .transit)
+        getDirections(transType: .any)
     }
     
-//    private func doubleTapGesture(){
+    @IBAction func BtnZoomIn(_ sender: UIButton) {
+        let span = MKCoordinateSpan(latitudeDelta: mapView.region.span.latitudeDelta/2, longitudeDelta: mapView.region.span.longitudeDelta/2)
+        let region = MKCoordinateRegion(center: mapView.region.center, span: span)
+        
+        mapView.setRegion(region, animated: true)
+    }
+    
+    @IBAction func BtnZoomOut(_ sender: UIButton) {
+        let span = MKCoordinateSpan(latitudeDelta: mapView.region.span.latitudeDelta*2, longitudeDelta: mapView.region.span.longitudeDelta*2)
+        let region = MKCoordinateRegion(center: mapView.region.center, span: span)
+        
+        mapView.setRegion(region, animated: true)
+    }
+    
+    func disableDoubleTap(){
+       print("GestureRecognizers before \(mapView.gestureRecognizers?.count ?? 0)")
+        if (mapView.gestureRecognizers != nil){
+            for gesture in mapView.gestureRecognizers!{
+                if (gesture.isMember(of:UITapGestureRecognizer.self)){
+                    mapView.removeGestureRecognizer(gesture)
+                }
+            }
+        }
+        print("GestureRecognizers after \(mapView.subviews[0].gestureRecognizers?.count ?? 0)")
+    }
+    
+    
+//        private func gesture(){
+//        mapView.delegate = self
 //        let tap = UITapGestureRecognizer(target: self, action: #selector(doubleTapped))
+//            tap.numberOfTouchesRequired = 2
 //        tap.numberOfTapsRequired = 2
-//        view.addGestureRecognizer(tap)
-//
+//        mapView.addGestureRecognizer(tap)
 //    }
+//
+//
 //    @objc func doubleTapped(sender: UIGestureRecognizer) {
 //        let locationInView = sender.location(in: mapView)
 //        let locationOnMap = mapView.convert(locationInView, toCoordinateFrom: mapView)
@@ -267,7 +300,6 @@ extension ViewController: MKMapViewDelegate {
         let renderer = MKPolylineRenderer(overlay: overlay)
         renderer.strokeColor = UIColor.blue
         renderer.lineWidth = 3.0
-        
         
         return renderer
         
